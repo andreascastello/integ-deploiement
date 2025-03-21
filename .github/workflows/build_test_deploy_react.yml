@@ -36,6 +36,11 @@ jobs:
           path: dist
           if-no-files-found: error
 
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
   # Deploy job
   deploy:
     # Deploy to the github-pages environment
