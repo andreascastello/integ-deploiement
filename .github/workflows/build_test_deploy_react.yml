@@ -27,8 +27,9 @@ jobs:
         run: echo "Configuring GitHub Pages"
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
+          name: github-pages
           path: './dist'
 
   deploy:
