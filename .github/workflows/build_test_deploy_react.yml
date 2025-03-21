@@ -35,6 +35,9 @@ jobs:
   deploy:
     needs: build_test
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      pages: write
     steps:
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v2
