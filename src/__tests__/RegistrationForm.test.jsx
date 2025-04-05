@@ -42,7 +42,7 @@ describe("RegistrationForm", () => {
         fireEvent.change(screen.getByPlaceholderText("First Name"), { target: { value: "123" } })
         fireEvent.change(screen.getByPlaceholderText("Last Name"), { target: { value: "@@@" } })
         fireEvent.change(screen.getByPlaceholderText("Email"), { target: { value: "badmail" } })
-        fireEvent.change(screen.getByPlaceholderText("City"), { target: { value: "Paris" } })
+        fireEvent.change(screen.getByPlaceholderText("City"), { target: { value: "" } })
         fireEvent.change(screen.getByPlaceholderText("Postal Code"), { target: { value: "1234" } })
 
         const dateInput = document.querySelector('input[type="date"]')
@@ -67,6 +67,7 @@ describe("RegistrationForm", () => {
         expect(screen.getByTestId("error-email")).toHaveTextContent(/invalid email/i)
         expect(screen.getByTestId("error-postalcode")).toHaveTextContent(/invalid postal code/i)
         expect(screen.getByTestId("error-birthdate")).toHaveTextContent(/age requirement/i)
+        expect(screen.getByTestId("error-city")).toHaveTextContent(/city is required/i)
     })
 
     it("saves valid data and resets the form", () => {
