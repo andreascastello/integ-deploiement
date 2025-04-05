@@ -1,7 +1,7 @@
 import React from 'react';
 import {fireEvent, render, screen} from '@testing-library/react';
 import { test, expect } from 'vitest';
-import App from './App'; // Assure-toi que le chemin est correct
+import App from '../App.jsx'; // Assure-toi que le chemin est correct
 
 test('Affiche un titre', () => {
     render(<App />);
