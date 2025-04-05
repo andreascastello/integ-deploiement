@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1743857632449" clover="3.2.0">
-  <project timestamp="1743857632449" name="All files">
-    <metrics statements="116" coveredstatements="116" conditionals="23" coveredconditionals="23" methods="6" coveredmethods="6" elements="145" coveredelements="145" complexity="0" loc="116" ncloc="116" packages="2" files="2" classes="2"/>
+<coverage generated="1743858616238" clover="3.2.0">
+  <project timestamp="1743858616238" name="All files">
+    <metrics statements="142" coveredstatements="142" conditionals="32" coveredconditionals="32" methods="10" coveredmethods="10" elements="184" coveredelements="184" complexity="0" loc="142" ncloc="142" packages="3" files="3" classes="3"/>
     <package name="src">
       <metrics statements="30" coveredstatements="30" conditionals="3" coveredconditionals="3" methods="2" coveredmethods="2"/>
       <file name="App.jsx" path="/Users/andreascastello/Documents/M2/Integration_deploiment/tp1/cicd/src/App.jsx">
@@ -128,6 +128,38 @@
         <line num="109" count="16" type="stmt"/>
         <line num="110" count="16" type="stmt"/>
         <line num="112" count="16" type="stmt"/>
+      </file>
+    </package>
+    <package name="src.utils">
+      <metrics statements="26" coveredstatements="26" conditionals="9" coveredconditionals="9" methods="4" coveredmethods="4"/>
+      <file name="validation.js" path="/Users/andreascastello/Documents/M2/Integration_deploiment/tp1/cicd/src/utils/validation.js">
+        <metrics statements="26" coveredstatements="26" conditionals="9" coveredconditionals="9" methods="4" coveredmethods="4"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="2" count="1" type="cond" truecount="1" falsecount="0"/>
+        <line num="3" count="10" type="stmt"/>
+        <line num="4" count="10" type="stmt"/>
+        <line num="5" count="10" type="cond" truecount="1" falsecount="0"/>
+        <line num="6" count="10" type="stmt"/>
+        <line num="8" count="1" type="cond" truecount="1" falsecount="0"/>
+        <line num="9" count="4" type="stmt"/>
+        <line num="10" count="4" type="stmt"/>
+        <line num="11" count="4" type="stmt"/>
+        <line num="13" count="1" type="cond" truecount="1" falsecount="0"/>
+        <line num="14" count="4" type="stmt"/>
+        <line num="15" count="4" type="stmt"/>
+        <line num="16" count="4" type="stmt"/>
+        <line num="18" count="1" type="cond" truecount="1" falsecount="0"/>
+        <line num="19" count="6" type="cond" truecount="1" falsecount="0"/>
+        <line num="21" count="3" type="stmt"/>
+        <line num="22" count="3" type="stmt"/>
+        <line num="23" count="3" type="stmt"/>
+        <line num="24" count="3" type="stmt"/>
+        <line num="26" count="3" type="stmt"/>
+        <line num="27" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="28" count="1" type="stmt"/>
+        <line num="29" count="1" type="cond" truecount="1" falsecount="0"/>
+        <line num="31" count="3" type="stmt"/>
+        <line num="32" count="3" type="stmt"/>
       </file>
     </package>
   </project>

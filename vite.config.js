@@ -11,7 +11,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './setupTests.js',
     coverage: {
-      include : ['src/**/*.jsx'],
+      include : ['src/**/*.jsx', 'src/**/*.js'],
       exclude: ['node_modules/', 'dist/', 'coverage/', 'src/main.jsx'],
     }
   },

@@ -43,5 +43,17 @@ describe("Validation Utils", () => {
         seventeenYearsAgo.setFullYear(seventeenYearsAgo.getFullYear() - 17)
         expect(isValidAge(seventeenYearsAgo.toISOString().split("T")[0])).toBe(false)
     })
-})
 
+    it("isValidAge - validates age requirement with birthday not yet passed", () => {
+        const eighteenYearsAgo = new Date()
+        eighteenYearsAgo.setFullYear(eighteenYearsAgo.getFullYear() - 18)
+        eighteenYearsAgo.setMonth(eighteenYearsAgo.getMonth() + 1) // Set to next month
+        expect(isValidAge(eighteenYearsAgo.toISOString().split("T")[0])).toBe(false)
+    })
+
+    it("isValidAge - returns false when no birthDate is provided", () => {
+        expect(isValidAge("")).toBe(false)
+        expect(isValidAge(null)).toBe(false)
+        expect(isValidAge(undefined)).toBe(false)
+    })
+})
