@@ -25,7 +25,7 @@ describe("RegistrationForm", () => {
 
     it("button is disabled if all fields are not filled", () => {
         render(<RegistrationForm />)
-        const button = screen.getByRole("button", { name: /save/i })
+        const button = screen.getByRole("button", { name: /joins us/i })
         expect(button).toBeDisabled()
     })
 
@@ -39,11 +39,11 @@ describe("RegistrationForm", () => {
         const { container } = render(<RegistrationForm />)
 
         // Fill in all fields with invalid data
-        fireEvent.change(screen.getByPlaceholderText("First Name"), { target: { value: "123" } })
-        fireEvent.change(screen.getByPlaceholderText("Last Name"), { target: { value: "@@@" } })
+        fireEvent.change(screen.getByPlaceholderText("Prénom"), { target: { value: "123" } })
+        fireEvent.change(screen.getByPlaceholderText("Nom"), { target: { value: "@@@" } })
         fireEvent.change(screen.getByPlaceholderText("Email"), { target: { value: "badmail" } })
-        fireEvent.change(screen.getByPlaceholderText("City"), { target: { value: "" } })
-        fireEvent.change(screen.getByPlaceholderText("Postal Code"), { target: { value: "1234" } })
+        fireEvent.change(screen.getByPlaceholderText("Ville"), { target: { value: "" } })
+        fireEvent.change(screen.getByPlaceholderText("Code Postal"), { target: { value: "1234" } })
 
         const dateInput = document.querySelector('input[type="date"]')
         fireEvent.change(dateInput, {
@@ -73,11 +73,11 @@ describe("RegistrationForm", () => {
     it("saves valid data and resets the form", () => {
         render(<RegistrationForm />)
 
-        fireEvent.change(screen.getByPlaceholderText("First Name"), { target: { value: "Alice" } })
-        fireEvent.change(screen.getByPlaceholderText("Last Name"), { target: { value: "Smith" } })
+        fireEvent.change(screen.getByPlaceholderText("Prénom"), { target: { value: "Alice" } })
+        fireEvent.change(screen.getByPlaceholderText("Nom"), { target: { value: "Smith" } })
         fireEvent.change(screen.getByPlaceholderText("Email"), { target: { value: "alice@example.com" } })
-        fireEvent.change(screen.getByPlaceholderText("City"), { target: { value: "New York" } })
-        fireEvent.change(screen.getByPlaceholderText("Postal Code"), { target: { value: "10001" } })
+        fireEvent.change(screen.getByPlaceholderText("Ville"), { target: { value: "New York" } })
+        fireEvent.change(screen.getByPlaceholderText("Code Postal"), { target: { value: "10001" } })
 
         const date = new Date()
         date.setFullYear(date.getFullYear() - 20)
@@ -88,7 +88,7 @@ describe("RegistrationForm", () => {
             target: { value: birthDate, name: "birthDate" },
         })
 
-        const button = screen.getByRole("button", { name: /save/i })
+        const button = screen.getByRole("button", { name: /joins us/i })
         expect(button).not.toBeDisabled()
 
         fireEvent.click(button)
@@ -100,7 +100,26 @@ describe("RegistrationForm", () => {
         expect(screen.getByText(/registration successful/i)).toBeInTheDocument()
 
         // Check that form was reset
-        expect(screen.getByPlaceholderText("First Name")).toHaveValue("")
+        expect(screen.getByPlaceholderText("Prénom")).toHaveValue("")
+    })
+
+    it("resets displayDate when birthDate is cleared", () => {
+        render(<RegistrationForm />)
+
+        // On renseigne d'abord une date
+        const dateInput = document.querySelector('input[type="date"]')
+        fireEvent.change(dateInput, {
+            target: { value: "2000-01-01", name: "birthDate" },
+        })
+
+        // On l'efface
+        fireEvent.change(dateInput, {
+            target: { value: "", name: "birthDate" },
+        })
+
+        // Vérifie que le champ texte affiche bien "Date de naissance"
+        const displayInput = screen.getByPlaceholderText("Date de naissance")
+        expect(displayInput).toHaveValue("")
     })
 })
 
