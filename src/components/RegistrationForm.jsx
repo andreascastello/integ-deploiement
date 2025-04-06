@@ -4,6 +4,18 @@ import { useState } from "react"
 import { isValidName, isValidEmail, isValidPostalCode, isValidAge } from "../utils/validation"
 import "./RegistrationForm.css"
 
+/**
+ * État initial du formulaire d'inscription.
+ * Contient les champs requis pour l'utilisateur.
+ *
+ * @typedef {Object} FormData
+ * @property {string} firstName - Prénom de l'utilisateur.
+ * @property {string} lastName - Nom de l'utilisateur.
+ * @property {string} email - Adresse email.
+ * @property {string} birthDate - Date de naissance (YYYY-MM-DD).
+ * @property {string} city - Ville de résidence.
+ * @property {string} postalCode - Code postal français (5 chiffres).
+ */
 const initialState = {
     firstName: "",
     lastName: "",
@@ -214,4 +226,3 @@ export default function RegistrationForm() {
 
 // Export for testing
 export { initialState }
-
