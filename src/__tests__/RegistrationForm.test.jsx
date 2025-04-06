@@ -25,7 +25,7 @@ describe("RegistrationForm", () => {
 
     it("button is disabled if all fields are not filled", () => {
         render(<RegistrationForm />)
-        const button = screen.getByRole("button", { name: /joins us/i })
+        const button = screen.getByRole("button", { name: /join us/i })
         expect(button).toBeDisabled()
     })
 
@@ -88,7 +88,7 @@ describe("RegistrationForm", () => {
             target: { value: birthDate, name: "birthDate" },
         })
 
-        const button = screen.getByRole("button", { name: /joins us/i })
+        const button = screen.getByRole("button", { name: /join us/i })
         expect(button).not.toBeDisabled()
 
         fireEvent.click(button)

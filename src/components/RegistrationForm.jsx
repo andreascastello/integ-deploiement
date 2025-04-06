@@ -214,7 +214,7 @@ export default function RegistrationForm() {
                         </div>
 
                         <button type="submit" disabled={!isFormComplete} className="submit-button">
-                            JOINS US
+                            JOIN US
                         </button>
                     </form>
                 </div>
