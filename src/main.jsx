@@ -8,3 +8,5 @@ createRoot(document.getElementById('root')).render(
     <RegistrationForm />
   </StrictMode>,
 )
+
+export default RegistrationForm;

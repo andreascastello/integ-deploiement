@@ -1,11 +1,11 @@
 {
-  "name": "cicd",
-  "private": true,
+  "name": "andreascastello-cicd",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build-npm-ci": "NODE_ENV=production && rm -rf dist && mkdir dist && npx babel src --out-dir dist --copy-files",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
@@ -19,6 +19,10 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@babel/cli": "^7.27.0",
+    "@babel/core": "^7.26.10",
+    "@babel/plugin-transform-react-jsx": "^7.25.9",
+    "@babel/preset-react": "^7.26.3",
     "@eslint/js": "^9.21.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
