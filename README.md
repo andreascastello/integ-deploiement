@@ -87,7 +87,7 @@ Accessible ensuite ici :
 (Si publié)
 
 ```bash
-npm install @<ton-profil-npm>/formulaire-react
+npm i andreascastello-cicd
 ```
 
 ---
