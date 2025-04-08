@@ -17,6 +17,8 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
+          registry-url: 'https://registry.npmjs.org'
+          always-auth: true
       - name: npm ci, jsdoc, build and test
         run: |
           npm ci
@@ -63,6 +65,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install Babel dependencies
+        run: npm install --save-dev @babel/core @babel/cli @babel/preset-env @babel/preset-react
       - name: Build package for npm
         run: npm run build-npm-ci
       - name: Configure Git
