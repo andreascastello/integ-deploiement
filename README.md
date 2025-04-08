@@ -84,8 +84,6 @@ Accessible ensuite ici :
 
 ## 📤 Publication NPM
 
-(Si publié)
-
 ```bash
 npm i andreascastello-cicd
 ```
