@@ -66,18 +66,29 @@ jobs:
 
       - name: Install Babel dependencies
         run: npm install --save-dev @babel/core @babel/cli @babel/preset-env @babel/preset-react
+
       - name: Build package for npm
         run: npm run build-npm-ci
+
       - name: Configure Git
         run: |
           git config --global user.email "andreas.castello06@gmail.com"
           git config --global user.name "andreascastello"
+
       - name: Setup npm authentication
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
 
-      - name: Bump version and publish on NPM
+      - name: Check if version is new
         run: |
-          npm version patch --no-git-tag-version
-          npm publish
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          PUBLISHED_VERSION=$(npm view $(node -p "require('./package.json').name") version || echo "0.0.0")
+          echo "Current: $CURRENT_VERSION, Published: $PUBLISHED_VERSION"
+          if [ "$CURRENT_VERSION" = "$PUBLISHED_VERSION" ]; then
+            echo "❌ Version $CURRENT_VERSION is already published. Please bump the version in package.json."
+            exit 1
+          fi
+
+      - name: Bump version and publish on NPM
+        run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
