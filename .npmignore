@@ -18,3 +18,5 @@ src/
 *.log
 *.local
 *.md
+
+node_modules/
