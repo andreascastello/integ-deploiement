@@ -4,24 +4,20 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+
 jobs:
   build_test:
-    # The type of runner that the job will run on
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         node-version: [20.x]
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
       - name: Use Node-js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
-      - name: pm ci, build and test
+      - name: npm ci, jsdoc, build and test
         run: |
           npm ci
           npm run coverage
@@ -31,45 +27,51 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload dist for GitHub Pages
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-pages-dist
+          path: dist
 
-      - name: build and publish package on NPM
-        run: |
-          git config --global user.email "andreas.castello06@gmail.com"
-          git config --global user.name "andreascastello"
-          npm run build-npm-ci
-          npm version patch
-          npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
+  deploy_pages:
+    needs: build_test
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v3
+      - name: Download dist from previous job
+        uses: actions/download-artifact@v4
+        with:
+          name: github-pages-dist
+          path: dist
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload entire repository
           path: dist
-          if-no-files-found: error
-
-  # Deploy job
-  deploy:
-    # Deploy to the github-pages environment
-    environment:
-      name: github-pages
-      url: ${{steps.deployment.outputs.page_url}}
-    runs-on: ubuntu-latest
-
-    # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
-    permissions:
-      pages: write
-      # to deploy to Pages
-      id-token: write # to verify the deployment originates from an appropriate source
-
-    # Add a dependency to the build job
-    needs: build_test
-    # Specify runner + deployment step
-    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  deploy_npm:
+    needs: build_test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build package for npm
+        run: npm run build-npm-ci
+      - name: Configure Git
+        run: |
+          git config --global user.email "andreas.castello06@gmail.com"
+          git config --global user.name "andreascastello"
+      - name: Bump version and publish on NPM
+        run: |
+          npm version patch --no-git-tag-version
+          npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
