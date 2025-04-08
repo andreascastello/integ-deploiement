@@ -1,0 +1,20 @@
+# Exclude test files and config
+__tests__/
+coverage/
+.vscode/
+.gitignore
+.github/
+jsdoc.config.json
+README.md
+public/
+.eslintrc.js
+eslint.config.js
+vitest.config.js
+vite.config.js
+
+# Exclude source files and assets
+src/
+*.test.*
+*.log
+*.local
+*.md
