@@ -1,6 +1,6 @@
-"use client"
+// "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { isValidName, isValidEmail, isValidPostalCode, isValidAge } from "../utils/validation"
 import "./RegistrationForm.css"
 
@@ -42,7 +42,7 @@ const CalendarIcon = () => (
     </svg>
 )
 
-export default function RegistrationForm() {
+export default function RegistrationForm({ onUserCreated }) {
     const [formData, setFormData] = useState(initialState)
     const [errors, setErrors] = useState({})
     const [success, setSuccess] = useState("")
@@ -78,17 +78,46 @@ export default function RegistrationForm() {
         return Object.keys(newErrors).length === 0
     }
 
-    const handleSubmit = (e) => {
-        e.preventDefault()
+    const handleSubmit = async (e) => {
+        e.preventDefault();
         if (validate()) {
-            localStorage.setItem("registration", JSON.stringify(formData))
-            setSuccess("Registration successful!")
-            setErrorToast("")
-            setFormData(initialState)
-            setDisplayDate("Date de naissance")
+            try {
+                const response = await fetch(
+                    `${import.meta.env.VITE_REACT_APP_SERVER_URL || "http://localhost:8000"}/register`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            nom: formData.lastName,
+                            prenom: formData.firstName,
+                            email: formData.email,
+                            date_naissance: formData.birthDate,
+                            ville: formData.city,
+                            code_postal: formData.postalCode,
+                        }),
+                    }
+                );
+
+                if (response.ok) {
+                    setSuccess("Registration successful!");
+                    setErrorToast("");
+                    setFormData(initialState);
+                    setDisplayDate("Date de naissance");
+                    if (onUserCreated) onUserCreated();
+                } else {
+                    const error = await response.text();
+                    setSuccess("");
+                    setErrorToast("Error: " + error);
+                }
+            } catch (err) {
+                setSuccess("");
+                setErrorToast("Server error: " + err.message);
+            }
         } else {
-            setSuccess("")
-            setErrorToast("Please correct the errors.")
+            setSuccess("");
+            setErrorToast("Please correct the errors.");
         }
     }
 
@@ -223,6 +252,3 @@ export default function RegistrationForm() {
         </div>
     )
 }
-
-// Export for testing
-export { initialState }

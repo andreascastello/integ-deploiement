@@ -3,7 +3,7 @@
   "version": "0.0.4",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "vite build",
     "build-npm-ci": "NODE_ENV=production && rm -rf dist && mkdir dist && npx babel src --out-dir dist --copy-files",
     "lint": "eslint .",
@@ -12,7 +12,8 @@
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
     "coverage": "vitest --coverage",
-    "jsdoc": "jsdoc -R ./README.md -c ./jsdoc.config.json -r -d ./public/docs"
+    "jsdoc": "jsdoc -R ./README.md -c ./jsdoc.config.json -r -d ./public/docs",
+    "cypress": "cypress open"
   },
   "dependencies": {
     "react": "^19.0.0",

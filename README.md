@@ -1,7 +1,7 @@
 # 📝 Formulaire React – TP d’Intégration & Déploiement
 
-Projet réalisé dans le cadre du TP “Intégration & Déploiement”.  
-Objectif : construire un formulaire d’inscription React complet avec validation, tests, documentation, couverture, déploiement GitHub Pages et publication NPM.
+Projet réalisé dans le cadre du TP "Intégration & Déploiement".  
+Objectif : construire un formulaire d'inscription React complet avec validation, tests, documentation, couverture, déploiement GitHub Pages et publication NPM.
 
 ---
 
@@ -15,7 +15,7 @@ Objectif : construire un formulaire d’inscription React complet avec validatio
 - ✅ Bouton de soumission désactivé tant que tous les champs ne sont pas remplis
 - ✅ Affichage des erreurs sous les champs concernés
 - ✅ Sauvegarde dans le localStorage
-- ✅ Toasts de succès ou d’erreur
+- ✅ Toasts de succès ou d'erreur
 - ✅ Réinitialisation automatique du formulaire après enregistrement
 - ✅ Couverture de tests 100% avec Vitest
 - ✅ Documentation technique générée automatiquement avec JSDoc
@@ -98,10 +98,10 @@ npm i andreascastello-cicd
 | L'âge > 18 ans | ✅ |
 | Le format du code postal | ✅ |
 | Le format des noms/prénoms (y compris accents/tirets) | ✅ |
-| Le format de l’email | ✅ |
+| Le format de l'email | ✅ |
 | Le bouton désactivé si les champs sont vides | ✅ |
 | La sauvegarde dans le localStorage et le toaster de succès | ✅ |
-| Le toaster d’erreur et erreurs sous les champs | ✅ |
+| Le toaster d'erreur et erreurs sous les champs | ✅ |
 | La disparition des erreurs quand corrigées | ✅ |
 
 ---

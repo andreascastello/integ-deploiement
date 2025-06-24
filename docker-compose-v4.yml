@@ -1,0 +1,64 @@
+# Use root/example as user/password credentials
+version: '3.1'
+
+x-common-variables: &common-variables
+  REACT_APP_SERVER_PORT: 8000
+
+services:
+
+  db:
+    image: mysql:9.2
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    ports:
+      - 3306:3306
+    volumes:
+      - ./sqlfiles/:/docker-entrypoint-initdb.d/
+    healthcheck:
+      test: mysqladmin ping -h localhost
+  adminer:
+    depends_on:
+      - db
+    image: adminer
+    ports:
+      - 8080:8080
+    environment:
+      <<: *common-variables
+  server:
+    restart: on-failure
+    image: python-api-2
+    volumes:
+      - ./server:/server
+    build:
+      context: .
+      dockerfile: ./server/DockerfilePython
+    ports:
+      - 8000:8000
+    environment:
+      - MYSQL_HOST=db
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+    command: uvicorn server:app --proxy-headers --host 0.0.0.0 --port 8000
+  react:
+    image: react
+    build:
+      context: .
+      dockerfile: ./DockerfileReact
+    ports:
+      - 3000:5173
+    environment:
+      - VITE_REACT_APP_SERVER_URL=${VITE_REACT_APP_SERVER_URL}
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/server
+    command: npm run dev
+    tty: true

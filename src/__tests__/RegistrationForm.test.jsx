@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest"
-import { fireEvent, render, screen } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import RegistrationForm from "../components/RegistrationForm"
 import { isValidName, isValidEmail, isValidPostalCode, isValidAge } from "../utils/validation"
 
@@ -70,7 +70,8 @@ describe("RegistrationForm", () => {
         expect(screen.getByTestId("error-city")).toHaveTextContent(/city is required/i)
     })
 
-    it("saves valid data and resets the form", () => {
+    it("saves valid data and resets the form", async () => {
+        global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ message: "Utilisateur créé avec succès" }) });
         render(<RegistrationForm />)
 
         fireEvent.change(screen.getByPlaceholderText("Prénom"), { target: { value: "Alice" } })
@@ -93,11 +94,14 @@ describe("RegistrationForm", () => {
 
         fireEvent.click(button)
 
-        // Check that data was saved to localStorage
-        expect(localStorage.getItem("registration")).toContain("Alice")
-
-        // Check for success message
-        expect(screen.getByText(/registration successful/i)).toBeInTheDocument()
+        // Affiche le DOM pour debug si le test échoue
+        // eslint-disable-next-line no-console
+        // console.log(document.body.innerHTML);
+        await waitFor(() => {
+            const el = document.querySelector('p.success-message');
+            expect(el).not.toBeNull();
+            expect(el.textContent).toMatch(/registration successful/i);
+        });
 
         // Check that form was reset
         expect(screen.getByPlaceholderText("Prénom")).toHaveValue("")
@@ -120,6 +124,47 @@ describe("RegistrationForm", () => {
         // Vérifie que le champ texte affiche bien "Date de naissance"
         const displayInput = screen.getByPlaceholderText("Date de naissance")
         expect(displayInput).toHaveValue("")
+    })
+
+    it("affiche une erreur serveur si fetch échoue", async () => {
+        global.fetch = vi.fn().mockRejectedValue(new Error("Server error"));
+        render(<RegistrationForm />)
+        fireEvent.change(screen.getByPlaceholderText("Prénom"), { target: { value: "Alice" } })
+        fireEvent.change(screen.getByPlaceholderText("Nom"), { target: { value: "Smith" } })
+        fireEvent.change(screen.getByPlaceholderText("Email"), { target: { value: "alice@example.com" } })
+        fireEvent.change(screen.getByPlaceholderText("Ville"), { target: { value: "New York" } })
+        fireEvent.change(screen.getByPlaceholderText("Code Postal"), { target: { value: "10001" } })
+        const date = new Date()
+        date.setFullYear(date.getFullYear() - 20)
+        const birthDate = date.toISOString().split("T")[0]
+        const dateInput = document.querySelector('input[type="date"]')
+        fireEvent.change(dateInput, {
+            target: { value: birthDate, name: "birthDate" },
+        })
+        const button = screen.getByRole("button", { name: /join us/i })
+        expect(button).not.toBeDisabled()
+        fireEvent.click(button)
+        await waitFor(() => {
+            const el = document.querySelector('p.error-toast');
+            expect(el).not.toBeNull();
+            expect(el.textContent).toMatch(/server error/i);
+            expect(document.querySelector('p.success-message')).toBeNull();
+        });
+    })
+
+    it("affiche une erreur de validation si le formulaire est invalide", async () => {
+        render(<RegistrationForm />)
+        fireEvent.change(screen.getByPlaceholderText("Prénom"), { target: { value: "" } })
+        fireEvent.change(screen.getByPlaceholderText("Nom"), { target: { value: "" } })
+        fireEvent.change(screen.getByPlaceholderText("Email"), { target: { value: "badmail" } })
+        fireEvent.change(screen.getByPlaceholderText("Ville"), { target: { value: "" } })
+        fireEvent.change(screen.getByPlaceholderText("Code Postal"), { target: { value: "1234" } })
+        const dateInput = document.querySelector('input[type="date"]')
+        fireEvent.change(dateInput, {
+            target: { value: "2020-01-01", name: "birthDate" },
+        })
+        const button = screen.getByRole("button", { name: /join us/i })
+        expect(button).toBeDisabled();
     })
 })
 

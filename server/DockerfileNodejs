@@ -1,0 +1,13 @@
+#Create Nodejs Image for JSP Tutorial Application
+FROM node:20
+WORKDIR /server
+
+ENV PATH /app/node_modules/.bin:$PATH
+
+# install app dependencies
+COPY ./server/package.json ./
+COPY ./server/package-lock.json ./
+
+RUN npm install
+
+EXPOSE 8000
