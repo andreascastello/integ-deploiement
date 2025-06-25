@@ -49,8 +49,8 @@ jobs:
       - name: Générer .env.prd
         run: echo "VITE_REACT_APP_SERVER_URL=${{ secrets.VITE_REACT_APP_SERVER_URL }}" > .env.prd
 
-      - name: Start Docker environment
-        run: docker compose up -d --build
+      - name: Start Docker environment (v4)
+        run: docker compose -f docker-compose-v4.yml up -d --build
 
       - name: Wait for services to be ready
         run: |
