@@ -59,6 +59,9 @@ jobs:
           echo "Waiting for frontend (http://localhost:3000) to be ready..."
           timeout 90 bash -c 'until curl -f http://localhost:3000 > /dev/null 2>&1; do sleep 2; done'
 
+      - name: Afficher les logs du backend
+        run: docker logs server || true
+
       - name: Run Cypress tests against Docker environment
         env:
           VITE_REACT_APP_SERVER_URL: http://localhost:8000
