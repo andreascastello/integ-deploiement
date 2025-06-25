@@ -1,9 +1,10 @@
-name: Build, Test and Deploy React Application
+name: CI/CD – React, FastAPI, Docker, Cypress
+
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build_test:
@@ -13,25 +14,58 @@ jobs:
         node-version: [20.x]
     steps:
       - uses: actions/checkout@v4
-      - name: Use Node-js ${{ matrix.node-version }}
+
+      - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
-      - name: npm ci, jsdoc, build and test
+
+      - name: Install dependencies and run unit/integration tests
+        env:
+          VITE_REACT_APP_SERVER_URL: ${{ secrets.VITE_REACT_APP_SERVER_URL }}
         run: |
           npm ci
           npm run coverage
           npm run jsdoc
-          npm run build --if-present
-      - name: Upload coverage reports to Codecov
+          npm run build
+
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+
       - name: Upload dist for GitHub Pages
         uses: actions/upload-artifact@v4
         with:
           name: github-pages-dist
           path: dist
+
+  docker_and_e2e:
+    runs-on: ubuntu-latest
+    needs: build_test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Générer .env.prd
+        run: echo "VITE_REACT_APP_SERVER_URL=${{ secrets.VITE_REACT_APP_SERVER_URL }}" > .env.prd
+
+      - name: Start Docker environment
+        run: docker compose up -d --build
+
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for backend (http://localhost:8000) to be ready..."
+          timeout 90 bash -c 'until curl -f http://localhost:8000 > /dev/null 2>&1; do sleep 2; done'
+          echo "Waiting for frontend (http://localhost:3000) to be ready..."
+          timeout 90 bash -c 'until curl -f http://localhost:3000 > /dev/null 2>&1; do sleep 2; done'
+
+      - name: Run Cypress tests against Docker environment
+        env:
+          VITE_REACT_APP_SERVER_URL: http://localhost:8000
+          CYPRESS_BASE_URL: http://localhost:3000
+        run: |
+          npx cypress install
+          npx cypress run
 
   deploy_pages:
     needs: build_test
@@ -40,22 +74,35 @@ jobs:
       pages: write
       id-token: write
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Setup Pages
-        id: pages
+      - uses: actions/checkout@v4
+
+      - name: Setup GitHub Pages
         uses: actions/configure-pages@v3
+
       - name: Download dist from previous job
         uses: actions/download-artifact@v4
         with:
           name: github-pages-dist
           path: dist
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build for GitHub Pages
+        run: npm run build
+        env:
+          VITE_BASE_PATH: /integ-deploiement/
+          VITE_REACT_APP_SERVER_URL: ${{ secrets.VITE_REACT_APP_SERVER_URL }}
+
+      - name: Create .nojekyll
+        run: echo > dist/.nojekyll
+      
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
+
       - name: Deploy to GitHub Pages
-        id: deployment
         uses: actions/deploy-pages@v4
 
   deploy_npm:
@@ -67,28 +114,37 @@ jobs:
       - name: Install Babel dependencies
         run: npm install --save-dev @babel/core @babel/cli @babel/preset-env @babel/preset-react
 
-      - name: Build package for npm
+      - name: Build npm package
         run: npm run build-npm-ci
+        working-directory: ./
 
       - name: Configure Git
         run: |
           git config --global user.email "andreas.castello06@gmail.com"
           git config --global user.name "andreascastello"
-
-      - name: Setup npm authentication
+      - name: Setup npm auth
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
 
-      - name: Check if version is new
+      - name: Check if version is already published
         run: |
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
-          PUBLISHED_VERSION=$(npm view $(node -p "require('./package.json').name") version || echo "0.0.0")
-          echo "Current: $CURRENT_VERSION, Published: $PUBLISHED_VERSION"
-          if [ "$CURRENT_VERSION" = "$PUBLISHED_VERSION" ]; then
-            echo "❌ Version $CURRENT_VERSION is already published. Please bump the version in package.json."
+          PKG_NAME=$(node -p "require('./package.json').name")
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if npm view "$PKG_NAME@$PKG_VERSION" > /dev/null 2>&1; then
+            echo "Version $PKG_VERSION already exists on NPM. Skipping publish."
             exit 1
           fi
-
-      - name: Bump version and publish on NPM
+      - name: Publish to NPM
         run: npm publish
+        working-directory: ./
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  deploy_backend_vercel:
+    needs: build_test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy FastAPI to Vercel
+        run: npx vercel deploy --prod --yes --token ${{ secrets.INTEG_TOKEN }}
+        working-directory: ./server

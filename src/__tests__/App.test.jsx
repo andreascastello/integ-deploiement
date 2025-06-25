@@ -3,6 +3,7 @@ import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import { test, expect } from 'vitest';
 import App from '../App.jsx'; // Assure-toi que le chemin est correct
 import { vi } from 'vitest';
+import { BrowserRouter } from 'react-router-dom';
 
 global.fetch = vi.fn();
 
@@ -13,7 +14,11 @@ describe("App", () => {
 
   it("affiche la liste publique par défaut", async () => {
     fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ utilisateurs: [{ id: 1, nom: "Dupont", prenom: "Jean" }] }) });
-    render(<App />);
+    render(
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    );
     await waitFor(() => expect(screen.getByText(/Dupont/)).toBeInTheDocument());
     expect(screen.queryByText(/Email/)).not.toBeInTheDocument();
   });
@@ -23,7 +28,11 @@ describe("App", () => {
       .mockResolvedValueOnce({ ok: true, json: async () => ({ utilisateurs: [{ id: 1, nom: "Dupont", prenom: "Jean" }] }) }) // public-users
       .mockResolvedValueOnce({ ok: true, json: async () => ({ access_token: "header.eyJkYXRhIjpbeyJlbWFpbCI6ImFkbWluQGV4LmNvbSJ9XX0=.signature" }) }) // login
       .mockResolvedValueOnce({ ok: true, json: async () => ({ utilisateurs: [{ id: 1, nom: "Dupont", prenom: "Jean", email: "jean@ex.com", date_naissance: "2000-01-01", ville: "Paris", code_postal: "75000" }] }) }); // users
-    render(<App />);
+    render(
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    );
     fireEvent.click(screen.getByText(/Connexion Admin/));
     const emailInputs = screen.getAllByPlaceholderText(/Email/);
     fireEvent.change(emailInputs[emailInputs.length - 1], { target: { value: "admin@ex.com" } });
@@ -40,7 +49,11 @@ describe("App", () => {
       .mockResolvedValueOnce({ ok: true, json: async () => ({ utilisateurs: [{ id: 1, nom: "Dupont", prenom: "Jean", email: "jean@ex.com" }] }) }) // users
       .mockResolvedValueOnce({ ok: true, json: async () => ({ message: "Utilisateur supprimé avec succès" }) }) // delete
       .mockResolvedValueOnce({ ok: true, json: async () => ({ utilisateurs: [] }) }); // fetch après delete
-    render(<App />);
+    render(
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    );
     fireEvent.click(screen.getByText(/Connexion Admin/));
     const emailInputs = screen.getAllByPlaceholderText(/Email/);
     fireEvent.change(emailInputs[emailInputs.length - 1], { target: { value: "admin@ex.com" } });
@@ -59,7 +72,11 @@ describe("App", () => {
       .mockResolvedValueOnce({ ok: true, json: async () => ({ utilisateurs: [{ id: 1, nom: "Dupont", prenom: "Jean", email: "jean@ex.com" }] }) }) // users
       .mockResolvedValueOnce({ ok: false }); // delete
     window.alert = vi.fn();
-    render(<App />);
+    render(
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    );
     fireEvent.click(screen.getByText(/Connexion Admin/));
     const emailInputs = screen.getAllByPlaceholderText(/Email/);
     fireEvent.change(emailInputs[emailInputs.length - 1], { target: { value: "admin@ex.com" } });
@@ -73,7 +90,11 @@ describe("App", () => {
 
   it("gère la déconnexion admin sur 401", async () => {
     fetch.mockResolvedValueOnce({ ok: false, status: 401 });
-    render(<App />);
+    render(
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    );
     // On force le mode admin
     // On simule un fetchUsers qui retourne 401
     // On vérifie que isAdmin repasse à false (donc on n'affiche plus les infos admin)
@@ -83,7 +104,11 @@ describe("App", () => {
 
   it("gère une erreur réseau dans fetchUsers", async () => {
     fetch.mockRejectedValueOnce(new Error("Network error"));
-    render(<App />);
+    render(
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    );
     await waitFor(() => {
       expect(screen.getByText(/erreur réseau|erreur serveur/i)).toBeInTheDocument();
       // Vérifie que la liste est vide
