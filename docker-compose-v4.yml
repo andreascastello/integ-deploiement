@@ -48,8 +48,8 @@ services:
   react:
     image: react
     build:
-      context: .
-      dockerfile: ./DockerfileReact
+      context: ./server
+      dockerfile: DockerfileReact
     ports:
       - 3000:5173
     environment:
