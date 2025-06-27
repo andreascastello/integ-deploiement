@@ -46,8 +46,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Générer .env.prd
-        run: echo "VITE_REACT_APP_SERVER_URL=${{ secrets.VITE_REACT_APP_SERVER_URL }}" > .env.prd
+      - name: Recreate .env file securely
+        run: echo "$ENV_FILE" > .env
+        env:
+          ENV_FILE: ${{ secrets.ENV_FILE }}
 
       - name: Start Docker environment (v4)
         run: docker compose -f docker-compose-v4.yml up -d --build
