@@ -8,7 +8,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copier tout le code source (adapter si besoin)
-COPY server.py .
+COPY . .
 
 # (Optionnel) Copier le .env si tu veux l'utiliser dans le conteneur
 # COPY ../.env .env

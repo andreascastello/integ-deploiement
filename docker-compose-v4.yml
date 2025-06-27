@@ -30,11 +30,9 @@ services:
   server:
     restart: on-failure
     image: python-api-2
-    volumes:
-      - ./server:/server
     build:
-      context: .
-      dockerfile: ./server/DockerfilePython
+      context: ./server
+      dockerfile: DockerfilePython
     ports:
       - 8000:8000
     environment:
