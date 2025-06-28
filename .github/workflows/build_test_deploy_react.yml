@@ -46,11 +46,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Use Node.js 20.x
-        uses: actions/setup-node@v2
-        with:
-          node-version: 20.x
-
       - name: Recreate .env file securely
         run: echo "$ENV_FILE" > .env
         env:
@@ -58,6 +53,7 @@ jobs:
 
       - name: Start Docker environment (v4)
         run: docker compose -f docker-compose-v4.yml up -d --build
+        working-directory: ./
 
       - name: Afficher les logs des services
         run: |
@@ -67,6 +63,7 @@ jobs:
           docker logs server || true
           echo "=== Logs de React ==="
           docker logs react || true
+        working-directory: ./
 
       - name: Wait for services to be ready
         run: |
@@ -76,17 +73,29 @@ jobs:
           echo "Waiting for frontend (http://localhost:3000) to be ready..."
           timeout 120 bash -c 'until curl -f http://localhost:3000 > /dev/null 2>&1; do echo "Frontend not ready yet..."; sleep 5; done'
           echo "Frontend is ready!"
+        working-directory: ./
 
       - name: Afficher les logs du backend
         run: docker logs server || true
+        working-directory: ./
+
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 20
+
+      - name: Install front dependencies
+        run: npm ci
+        working-directory: ./
 
       - name: Run Cypress tests against Docker environment
         env:
           VITE_REACT_APP_SERVER_URL: http://localhost:8000
           CYPRESS_BASE_URL: http://localhost:3000
         run: |
-          npm ci
+          npx cypress install
           npx cypress run --config-file cypress.config.cjs --browser chrome --headless
+        working-directory: ./
 
   deploy_pages:
     needs: build_test
