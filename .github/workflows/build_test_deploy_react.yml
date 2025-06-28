@@ -80,8 +80,8 @@ jobs:
           VITE_REACT_APP_SERVER_URL: http://localhost:8000
           CYPRESS_BASE_URL: http://localhost:3000
         run: |
-          npx cypress install
-          npx cypress run
+          npm ci
+          npx cypress run --config-file cypress.config.cjs --browser chrome --headless
 
   deploy_pages:
     needs: build_test
