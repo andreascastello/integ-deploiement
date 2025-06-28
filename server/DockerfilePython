@@ -1,6 +1,9 @@
 FROM python:3.9
 WORKDIR /server
 
+# Installer curl pour les healthchecks
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
 # Copier les dépendances en premier (pour le cache Docker)
 COPY requirements.txt .
 
