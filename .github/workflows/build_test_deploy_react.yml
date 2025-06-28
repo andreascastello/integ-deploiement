@@ -79,6 +79,14 @@ jobs:
         run: docker logs server || true
         working-directory: ./
 
+      - name: Afficher les logs du front
+        run: docker logs react
+        working-directory: ./
+
+      - name: Vérifier que le front répond
+        run: curl -v http://localhost:3000
+        working-directory: ./
+
       - name: Install Node.js
         uses: actions/setup-node@v2
         with:
