@@ -79,6 +79,10 @@ jobs:
         run: docker logs server || true
         working-directory: ./
 
+      - name: Lister les conteneurs Docker
+        run: docker ps -a
+        working-directory: ./
+
       - name: Afficher les logs du front
         run: docker logs react
         working-directory: ./
