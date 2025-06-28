@@ -62,7 +62,7 @@ jobs:
           echo "=== Logs du serveur ==="
           docker logs server || true
           echo "=== Logs de React ==="
-          docker logs react || true
+          docker logs integ-deploiement-react-1 || true
         working-directory: ./
 
       - name: Wait for services to be ready
@@ -84,7 +84,7 @@ jobs:
         working-directory: ./
 
       - name: Afficher les logs du front
-        run: docker logs react
+        run: docker logs integ-deploiement-react-1
         working-directory: ./
 
       - name: Vérifier que le front répond
