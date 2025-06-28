@@ -109,6 +109,14 @@ jobs:
         run: npm ci
         working-directory: ./
 
+      - name: Afficher le HTML retourné par le front
+        run: curl -s http://localhost:3000/integ-deploiement/ > page.html && head -40 page.html
+        working-directory: ./
+
+      - name: Derniers logs du front
+        run: docker logs integ-deploiement-react-1 | tail -40
+        working-directory: ./
+
       - name: Run Cypress tests against Docker environment
         env:
           VITE_REACT_APP_SERVER_URL: http://localhost:8000
