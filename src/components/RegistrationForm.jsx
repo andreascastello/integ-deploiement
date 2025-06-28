@@ -83,7 +83,7 @@ export default function RegistrationForm({ onUserCreated }) {
         if (validate()) {
             try {
                 const response = await fetch(
-                    `${import.meta.env.VITE_REACT_APP_SERVER_URL || "http://localhost:8000"}/register`,
+                    `${import.meta.env.VITE_REACT_APP_SERVER_URL}/register`,
                     {
                         method: "POST",
                         headers: {

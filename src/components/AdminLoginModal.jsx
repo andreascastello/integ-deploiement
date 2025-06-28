@@ -7,7 +7,7 @@ export default function AdminLoginModal({ onClose, onLoginSuccess }) {
 
     const handleLogin = async () => {
         try {
-            const res = await fetch("http://localhost:8000/login", {
+            const res = await fetch(`${import.meta.env.VITE_REACT_APP_SERVER_URL}/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

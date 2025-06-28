@@ -22,7 +22,7 @@ export default function App() {
             const headers = isAdmin && adminToken
                 ? { Authorization: `Bearer ${adminToken}` }
                 : {};
-            const res = await fetch(`http://localhost:8000/${isAdmin ? "users" : "public-users"}`, { headers });
+            const res = await fetch(`${import.meta.env.VITE_REACT_APP_SERVER_URL}/${isAdmin ? "users" : "public-users"}`, { headers });
             if (res.ok) {
                 const data = await res.json();
                 const userData = data.utilisateurs || data; // adapte à la structure reçue
@@ -39,7 +39,7 @@ export default function App() {
 
     const handleDeleteUser = async (id) => {
         if (!adminToken) return;
-        const res = await fetch(`http://localhost:8000/users?id=${id}`, {
+        const res = await fetch(`${import.meta.env.VITE_REACT_APP_SERVER_URL}/users?id=${id}`, {
             method: "DELETE",
             headers: {
                 Authorization: `Bearer ${adminToken}`
