@@ -5,14 +5,169 @@ on:
     types: [trigger-ci]
 
 jobs:
-  build:
+  build_test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install dependencies and run unit/integration tests
+        env:
+          VITE_REACT_APP_SERVER_URL: ${{ secrets.VITE_REACT_APP_SERVER_URL }}
+        run: |
+          npm ci
+          npm run coverage
+          npm run jsdoc
+          npm run build
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload dist for GitHub Pages
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-pages-dist
+          path: dist
+
+  docker_and_e2e:
+    runs-on: ubuntu-latest
+    needs: build_test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Recreate .env file securely
+        run: echo "$ENV_FILE" > .env
+        env:
+          ENV_FILE: ${{ secrets.ENV_FILE }}
+
+      - name: Start Docker environment (v4)
+        run: docker compose -f docker-compose-v4.yml up -d --build
+        working-directory: ./
+
+      - name: Afficher les logs des services
+        run: |
+          echo "=== Logs de la base de données ==="
+          docker logs db || true
+          echo "=== Logs du serveur ==="
+          docker logs server || true
+          echo "=== Logs de React ==="
+          docker logs integ-deploiement-react-1 || true
+        working-directory: ./
+
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for backend (http://localhost:8000) to be ready..."
+          timeout 120 bash -c 'until curl -f http://localhost:8000/public-users > /dev/null 2>&1; do echo "Backend not ready yet..."; sleep 5; done'
+          echo "Backend is ready!"
+          echo "Waiting for frontend (http://localhost:3000) to be ready..."
+          timeout 120 bash -c 'until curl -f http://localhost:3000 > /dev/null 2>&1; do echo "Frontend not ready yet..."; sleep 5; done'
+          echo "Frontend is ready!"
+        working-directory: ./
+
+      - name: Afficher les logs du backend
+        run: docker logs server || true
+        working-directory: ./
+
+      - name: Lister les conteneurs Docker
+        run: docker ps -a
+        working-directory: ./
+
+      - name: Afficher les logs du front
+        run: docker logs integ-deploiement-react-1
+        working-directory: ./
+
+      - name: Vérifier que le front répond
+        run: curl -v http://localhost:3000
+        working-directory: ./
+
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 20
+
+      - name: Clean node_modules
+        run: rm -rf node_modules
+        working-directory: ./
+
+      - name: Fix permissions
+        run: |
+          sudo chown -R $USER:$USER .
+        working-directory: ./
+
+      - name: Install front dependencies
+        run: npm ci
+        working-directory: ./
+
+      - name: Afficher le HTML retourné par le front
+        run: curl -s http://localhost:3000/integ-deploiement/ > page.html && head -40 page.html
+        working-directory: ./
+
+      - name: Derniers logs du front
+        run: docker logs integ-deploiement-react-1 | tail -40
+        working-directory: ./
+
+      - name: Run Cypress tests against Docker environment
+        env:
+          VITE_REACT_APP_SERVER_URL: http://localhost:8000
+          CYPRESS_BASE_URL: http://localhost:3000/integ-deploiement/
+        run: |
+          npx cypress install
+          npx cypress run --config-file cypress.config.cjs --browser chrome --headless
+        working-directory: ./
+
+  deploy_pages:
+    needs: build_test
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v3
+
+      - name: Download dist from previous job
+        uses: actions/download-artifact@v4
+        with:
+          name: github-pages-dist
+          path: dist
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build for GitHub Pages
+        run: npm run build
+        env:
+          VITE_BASE_PATH: /integ-deploiement/
+          VITE_REACT_APP_SERVER_URL: ${{ secrets.VITE_REACT_APP_SERVER_URL }}
+
+      - name: Create .nojekyll
+        run: echo > dist/.nojekyll
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
+
+  deploy_backend_vercel:
+    needs: build_test
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # Exemple d'étapes build/test pour ce repo
-      # - name: Install dependencies
-      #   run: ...
-      # - name: Run tests
-      #   run: ... 
+      - name: Deploy FastAPI to Vercel
+        run: npx vercel deploy --prod --yes --token ${{ secrets.INTEG_TOKEN }}
+        working-directory: ./server
