@@ -4,6 +4,7 @@ import PublicUserList from "./components/PublicUserList";
 import AdminLoginModal from "./components/AdminLoginModal";
 import AdminLoginButton from "./components/AdminLoginButton";
 import { Routes, Route, Navigate } from "react-router-dom";
+import BlogPostList from "./components/BlogPostList";
 
 export default function App() {
     const [users, setUsers] = useState([]);
@@ -15,6 +16,8 @@ export default function App() {
     const [successAdminLogin, setSuccessAdminLogin] = useState(false);
     const [successDelete, setSuccessDelete] = useState(false);
     const [successLogout, setSuccessLogout] = useState(false);
+    const [blogPosts, setBlogPosts] = useState([]);
+    const [blogError, setBlogError] = useState(null);
 
     const fetchUsers = async () => {
         try {
@@ -34,6 +37,22 @@ export default function App() {
         } catch (err) {
             setFetchError("Erreur réseau ou serveur");
             setUsers([]);
+        }
+    };
+
+    const fetchBlogPosts = async () => {
+        try {
+            setBlogError(null);
+            const res = await fetch(`${import.meta.env.VITE_NODE_API_URL}/api/posts`);
+            if (res.ok) {
+                const data = await res.json();
+                setBlogPosts(data);
+            } else {
+                setBlogError("Erreur lors de la récupération des posts du blog");
+            }
+        } catch (err) {
+            setBlogError("Erreur réseau ou serveur (blog)");
+            setBlogPosts([]);
         }
     };
 
@@ -64,6 +83,7 @@ export default function App() {
 
     useEffect(() => {
         fetchUsers();
+        fetchBlogPosts();
     }, [isAdmin, adminToken]);
 
     return (
@@ -72,6 +92,7 @@ export default function App() {
                 path="/"
                 element={
                     <>
+                        <BlogPostList posts={blogPosts} error={blogError} />
                         {fetchError && <div style={{color: 'red'}}>{fetchError}</div>}
                         <RegistrationForm onUserCreated={fetchUsers} />
                         <AdminLoginButton onClick={() => setShowModal(true)} />
