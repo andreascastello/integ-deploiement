@@ -27,3 +27,4 @@ public/docs
 
 .env
 .env.*
+cypress/screenshots/

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import RegistrationForm from "./components/RegistrationForm";
 import PublicUserList from "./components/PublicUserList";
 import AdminLoginModal from "./components/AdminLoginModal";
@@ -18,6 +18,10 @@ export default function App() {
     const [successLogout, setSuccessLogout] = useState(false);
     const [blogPosts, setBlogPosts] = useState([]);
     const [blogError, setBlogError] = useState(null);
+    const titleRef = useRef();
+    const contentRef = useRef();
+    const [blogSuccess, setBlogSuccess] = useState("");
+    const [blogErrorToast, setBlogErrorToast] = useState("");
 
     const fetchUsers = async () => {
         try {
@@ -43,7 +47,7 @@ export default function App() {
     const fetchBlogPosts = async () => {
         try {
             setBlogError(null);
-            const res = await fetch(`${import.meta.env.VITE_NODE_API_URL}/api/posts`);
+            const res = await fetch(`${import.meta.env.VITE_REACT_APP_EXPRESS_API_URL}/api/posts`, { cache: "no-store" });
             if (res.ok) {
                 const data = await res.json();
                 setBlogPosts(data);
@@ -81,10 +85,58 @@ export default function App() {
         setTimeout(() => setSuccessLogout(false), 2000);
     };
 
+    const handleCreatePost = async (e) => {
+        e.preventDefault();
+        const title = titleRef.current.value.trim();
+        const content = contentRef.current.value.trim();
+        if (!title || !content) {
+            setBlogErrorToast("Titre et contenu obligatoires");
+            return;
+        }
+        try {
+            const res = await fetch(`${import.meta.env.VITE_REACT_APP_EXPRESS_API_URL}/api/posts`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title, content })
+            });
+            if (res.ok) {
+                setBlogSuccess("Post créé !");
+                setBlogErrorToast("");
+                titleRef.current.value = "";
+                contentRef.current.value = "";
+                fetchBlogPosts();
+                setTimeout(() => setBlogSuccess(""), 2000);
+            } else {
+                setBlogErrorToast("Erreur lors de la création du post");
+            }
+        } catch (err) {
+            setBlogErrorToast("Erreur réseau ou serveur");
+        }
+    };
+
+    const handleDeletePost = async (postId) => {
+        if (!adminToken) return;
+        try {
+            const res = await fetch(`${import.meta.env.VITE_REACT_APP_EXPRESS_API_URL}/api/posts/${postId}`, {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${adminToken}` }
+            });
+            if (res.ok) {
+                fetchBlogPosts();
+            } else {
+                alert("Erreur lors de la suppression du post");
+            }
+        } catch (err) {
+            alert("Erreur réseau ou serveur lors de la suppression du post");
+        }
+    };
+
     useEffect(() => {
         fetchUsers();
         fetchBlogPosts();
     }, [isAdmin, adminToken]);
+
+    console.log("VITE_REACT_APP_EXPRESS_API_URL =", import.meta.env.VITE_REACT_APP_EXPRESS_API_URL);
 
     return (
         <Routes>
@@ -92,7 +144,15 @@ export default function App() {
                 path="/"
                 element={
                     <>
-                        <BlogPostList posts={blogPosts} error={blogError} />
+                        <BlogPostList posts={blogPosts} error={blogError} isAdmin={isAdmin} adminToken={adminToken} onDeletePost={handleDeletePost} />
+                        <form onSubmit={handleCreatePost} style={{ maxWidth: 600, margin: '20px auto', background: '#fffbe6', borderRadius: 16, padding: 24, boxShadow: '0 4px 12px rgba(0,0,0,0.07)' }}>
+                            <h3 style={{ textAlign: 'center', color: '#4e220e' }}>Créer un post de blog</h3>
+                            {blogSuccess && <div style={{ color: 'green', marginBottom: 8 }}>{blogSuccess}</div>}
+                            {blogErrorToast && <div style={{ color: 'red', marginBottom: 8 }}>{blogErrorToast}</div>}
+                            <input ref={titleRef} type="text" placeholder="Titre" style={{ width: '100%', marginBottom: 10, padding: 8, borderRadius: 4, border: '1px solid #d2b48c' }} />
+                            <textarea ref={contentRef} placeholder="Contenu" style={{ width: '100%', minHeight: 80, marginBottom: 10, padding: 8, borderRadius: 4, border: '1px solid #d2b48c' }} />
+                            <button type="submit" style={{ width: '100%', background: '#4e220e', color: 'white', padding: '0.7rem', border: 'none', borderRadius: 4, fontWeight: 'bold', cursor: 'pointer' }}>Publier</button>
+                        </form>
                         {fetchError && <div style={{color: 'red'}}>{fetchError}</div>}
                         <RegistrationForm onUserCreated={fetchUsers} />
                         <AdminLoginButton onClick={() => setShowModal(true)} />

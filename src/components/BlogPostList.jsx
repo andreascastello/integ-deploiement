@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function BlogPostList({ posts, error }) {
+export default function BlogPostList({ posts, error, isAdmin, adminToken, onDeletePost }) {
     return (
         <div className="blog-posts-container" style={{ maxWidth: 600, margin: '40px auto', background: '#f5f5f5', borderRadius: 16, padding: 30, boxShadow: '0 10px 25px rgba(0,0,0,0.08)' }}>
             <h2 style={{ color: '#4e220e', fontSize: '2.2rem', marginBottom: 20, textAlign: 'center' }}>Blog</h2>
@@ -8,13 +8,18 @@ export default function BlogPostList({ posts, error }) {
             {posts && posts.length > 0 ? (
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                     {posts.map((post) => (
-                        <li key={post._id} style={{ padding: '12px 20px', borderBottom: '1px solid #d2b48c', color: '#4a2511', fontSize: '1.1rem' }}>
+                        <li key={post._id} style={{ padding: '12px 20px', borderBottom: '1px solid #d2b48c', color: '#4a2511', fontSize: '1.1rem', position: 'relative' }}>
                             <strong>{post.title}</strong>
                             <div style={{ margin: '8px 0' }}>{post.content}</div>
                             {post.author && post.author.email && (
                                 <div style={{ fontSize: '0.95em', color: '#7b5e3b' }}>Auteur : {post.author.email}</div>
                             )}
                             <div style={{ fontSize: '0.85em', color: '#a1887f' }}>{new Date(post.createdAt).toLocaleString('fr-FR')}</div>
+                            {isAdmin && (
+                                <button style={{ position: 'absolute', top: 10, right: 10, background: '#c53030', color: 'white', border: 'none', borderRadius: '4px', padding: '0.3rem 0.7rem', cursor: 'pointer' }} onClick={() => onDeletePost(post._id)}>
+                                    Supprimer
+                                </button>
+                            )}
                         </li>
                     ))}
                 </ul>

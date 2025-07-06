@@ -1,12 +1,12 @@
 // PublicUserList.jsx
 import React  from 'react';
 
-function PublicUserList({ users, isAdmin, onDeleteUser, adminEmail }) {
+function PublicUserList({ users = [], isAdmin, onDeleteUser, adminEmail }) {
     return (
         <div className="public-users-container">
             <h2>Liste des utilisateurs</h2>
             <ul>
-                {users.map((user, index) => (
+                {(Array.isArray(users) ? users : []).map((user, index) => (
                     <li key={index} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <span>
                             {user.nom} {user.prenom}
