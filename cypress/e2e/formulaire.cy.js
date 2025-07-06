@@ -5,9 +5,9 @@ describe('Formulaire - Validation', () => {
   });
 
   it('désactive le bouton si tous les champs ne sont pas remplis', () => {
-    cy.get('button[type="submit"]').should('be.disabled');
+    cy.get('form[data-testid="registration-form"] button[type="submit"]').should('be.disabled');
     cy.get('input[placeholder="Nom"]').type('Test');
-    cy.get('button[type="submit"]').should('be.disabled');
+    cy.get('form[data-testid="registration-form"] button[type="submit"]').should('be.disabled');
   });
 
   it('affiche des erreurs pour des champs invalides', () => {
@@ -18,7 +18,7 @@ describe('Formulaire - Validation', () => {
     cy.get('input[placeholder="Code Postal"]').type('1234');
     cy.get('input[type="date"]').type('2020-01-01');
 
-    cy.get('button[type="submit"]').should('not.be.disabled').click();
+    cy.get('form[data-testid="registration-form"] button[type="submit"]').should('not.be.disabled').click();
 
     cy.get('[data-testid="error-lastname"]').should('contain', 'invalid last name');
     cy.get('[data-testid="error-email"]').should('contain', 'invalid email');
@@ -33,7 +33,7 @@ describe('Formulaire - Validation', () => {
     cy.get('input[placeholder="Ville"]').type('Paris');
     cy.get('input[placeholder="Code Postal"]').type('75000');
     cy.get('input[type="date"]').type('2010-01-01');
-    cy.get('button[type="submit"]').click();
+    cy.get('form[data-testid="registration-form"] button[type="submit"]').click();
     cy.contains(/age requirement/i).should('be.visible');
   });
 
@@ -44,7 +44,7 @@ describe('Formulaire - Validation', () => {
     cy.get('input[placeholder="Ville"]').type('Paris');
     cy.get('input[placeholder="Code Postal"]').type('75000');
     cy.get('input[type="date"]').type('1995-01-01');
-    cy.get('button[type="submit"]').should('not.be.disabled').click();
+    cy.get('form[data-testid="registration-form"] button[type="submit"]').should('not.be.disabled').click();
     cy.get('.success-message').should('contain', 'Registration successful');
     cy.contains('Testeur Cypress').should('be.visible');
   });

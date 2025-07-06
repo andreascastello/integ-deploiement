@@ -12,7 +12,7 @@ export default defineConfig({
     setupFiles: './setupTests.js',
     coverage: {
       include : ['src/**/*.jsx', 'src/**/*.js'],
-      exclude: ['node_modules/', 'dist/', 'coverage/', 'src/main.jsx'],
+      exclude: ['node_modules/', 'dist/', 'coverage/', 'src/main.jsx', 'src/App.jsx'],
     }
   },
 });

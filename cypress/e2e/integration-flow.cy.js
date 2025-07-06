@@ -5,14 +5,17 @@ describe('Flow d\'intégration complet', () => {
   });
 
   it('inscription, connexion admin, suppression', () => {
-    // Inscription avec des valeurs valides
+    // Utiliser un email unique pour éviter les conflits
+    const email = 'delete+' + Date.now() + '@me.com';
+
+    // Inscription
     cy.get('input[placeholder="Nom"]').type('Delete');
     cy.get('input[placeholder="Prénom"]').type('Me');
-    cy.get('input[placeholder="Email"]').type('delete@me.com');
+    cy.get('input[placeholder="Email"]').type(email);
     cy.get('input[placeholder="Ville"]').type('Paris');
     cy.get('input[placeholder="Code Postal"]').type('75000');
     cy.get('input[type="date"]').type('2000-01-01');
-    cy.get('button[type="submit"]').should('not.be.disabled').click();
+    cy.get('form[data-testid="registration-form"] button[type="submit"]').should('not.be.disabled').click();
     cy.contains('Delete Me').should('be.visible');
 
     // Connexion admin
@@ -20,7 +23,11 @@ describe('Flow d\'intégration complet', () => {
     cy.get('input[placeholder="Email"]').last().type('loise.fenoll@ynov.com');
     cy.get('input[placeholder="Mot de passe"]').last().type('PvdrTAzTeR247sDnAZBr');
     cy.get('button').contains(/se connecter/i).click();
-    cy.contains('Delete Me').parent().find('button').contains(/supprimer/i).click();
+
+    // Attendre que le bouton supprimer soit visible pour cet utilisateur
+    cy.contains('Delete Me').closest('li').find('button').contains(/supprimer/i).should('be.visible').click();
+
+    // Vérifier la suppression
     cy.contains('Delete Me').should('not.exist');
   });
 
@@ -33,7 +40,7 @@ describe('Flow d\'intégration complet', () => {
     cy.get('input[placeholder="Code Postal"]').type('1234');
     cy.get('input[type="date"]').type('2020-01-01');
     // Le bouton doit être désactivé car il y a des champs vides et invalides
-    cy.get('button[type="submit"]').should('be.disabled');
+    cy.get('form[data-testid="registration-form"] button[type="submit"]').should('be.disabled');
 
     // Correction de TOUS les champs (tous remplis et valides)
     cy.get('input[placeholder="Nom"]').clear().type('ValidNom');
@@ -43,7 +50,7 @@ describe('Flow d\'intégration complet', () => {
     cy.get('input[placeholder="Code Postal"]').clear().type('75000');
     cy.get('input[type="date"]').clear().type('2000-01-01');
     // Le bouton doit maintenant être activé
-    cy.get('button[type="submit"]').should('not.be.disabled').click();
+    cy.get('form[data-testid="registration-form"] button[type="submit"]').should('not.be.disabled').click();
     cy.contains(/registration successful/i).should('be.visible');
     cy.contains('ValidNom ValidPrenom').should('be.visible');
   });
@@ -70,7 +77,7 @@ describe('Flow d\'intégration complet', () => {
     cy.get('input[placeholder="Ville"]').type('Paris');
     cy.get('input[placeholder="Code Postal"]').type('75000');
     cy.get('input[type="date"]').type('2000-01-01');
-    cy.get('button[type="submit"]').should('not.be.disabled').click();
+    cy.get('form[data-testid="registration-form"] button[type="submit"]').should('not.be.disabled').click();
     cy.contains('NoDelete User').should('be.visible');
     // Vérifier qu'il n'y a PAS de bouton supprimer
     cy.contains('NoDelete User').parent().find('button').should('not.exist');
@@ -92,14 +99,15 @@ describe('Flow d\'intégration complet', () => {
     cy.get('input[placeholder="Ville"]').type('Paris');
     cy.get('input[placeholder="Code Postal"]').type('75000');
     cy.get('input[type="date"]').type('2000-01-01');
-    cy.get('button[type="submit"]').should('not.be.disabled').click();
+    cy.get('form[data-testid="registration-form"] button[type="submit"]').should('not.be.disabled').click();
     cy.contains('Toast Delete').should('be.visible');
     cy.get('button').contains(/connexion admin/i).click();
     cy.get('input[placeholder="Email"]').last().type('loise.fenoll@ynov.com');
     cy.get('input[placeholder="Mot de passe"]').last().type('PvdrTAzTeR247sDnAZBr');
     cy.get('button').contains(/se connecter/i).click();
-    cy.contains('Toast Delete').parent().find('button').contains(/supprimer/i).click();
-    cy.get('div').contains('Utilisateur supprimé avec succès').should('be.visible');
+    cy.contains('Toast Delete').closest('li').find('button').contains(/supprimer/i).should('be.visible').click();
+    cy.contains('Utilisateur supprimé avec succès').should('be.visible');
+    cy.contains('Toast Delete').should('not.exist');
   });
 
   it('affiche et utilise le bouton de déconnexion admin', () => {
@@ -121,5 +129,43 @@ describe('Flow d\'intégration complet', () => {
     cy.get('button').contains(/se connecter/i).click();
     cy.get('button').contains(/déconnexion admin/i).should('be.visible').click();
     cy.get('div').contains('Déconnexion admin réussie').should('be.visible');
+  });
+
+  it('flux complet : inscription → création blog → admin supprime', () => {
+    // 1. Inscription utilisateur
+    cy.get('input[placeholder="Nom"]').type('BlogUser');
+    cy.get('input[placeholder="Prénom"]').type('Test');
+    cy.get('input[placeholder="Email"]').type('bloguser@test.com');
+    cy.get('input[placeholder="Ville"]').type('Paris');
+    cy.get('input[placeholder="Code Postal"]').type('75000');
+    cy.get('input[type="date"]').type('2000-01-01');
+    cy.get('form[data-testid="registration-form"] button[type="submit"]').should('not.be.disabled').click();
+    cy.contains('BlogUser Test').should('be.visible');
+    
+    // 2. Création d'un post de blog
+    const blogTitle = 'Post de test ' + Date.now();
+    cy.get('input[placeholder="Titre"]').type(blogTitle);
+    cy.get('textarea[placeholder="Contenu"]').type('Contenu du post de test');
+    cy.get('button').contains('Publier').click();
+    cy.contains('Post créé !').should('be.visible');
+    cy.contains(blogTitle).should('be.visible');
+    
+    // 3. Connexion admin
+    cy.get('button').contains(/connexion admin/i).click();
+    cy.get('input[placeholder="Email"]').last().type('loise.fenoll@ynov.com');
+    cy.get('input[placeholder="Mot de passe"]').last().type('PvdrTAzTeR247sDnAZBr');
+    cy.get('button').contains(/se connecter/i).click();
+    
+    // 4. Suppression du post par l'admin
+    cy.contains(blogTitle).closest('li').find('button').contains('Supprimer').should('be.visible').click();
+    cy.contains(blogTitle).should('not.exist');
+    
+    // 5. Déconnexion admin
+    cy.get('button').contains(/déconnexion admin/i).should('be.visible').click();
+    cy.get('button').contains(/déconnexion admin/i).should('not.exist');
+    
+    // 6. Vérification finale : l'utilisateur existe toujours mais pas le post
+    cy.contains('BlogUser Test').should('be.visible');
+    cy.contains(blogTitle).should('not.exist');
   });
 }); 

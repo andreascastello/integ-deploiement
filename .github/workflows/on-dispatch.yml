@@ -50,7 +50,7 @@ jobs:
           ENV_FILE: ${{ secrets.ENV_FILE }}
 
       - name: Start Docker environment (v4)
-        run: docker compose -f docker-compose-v4.yml up -d --build
+        run: docker compose -f docker-compose-v4-mongo.yml up -d --build
         working-directory: ./
 
       - name: Afficher les logs des services
