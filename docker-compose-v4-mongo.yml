@@ -65,7 +65,7 @@ services:
     environment:
       - VITE_REACT_APP_SERVER_URL=http://localhost:8000
       - VITE_BASE_PATH=/integ-deploiement/
-      - VITE_REACT_APP_EXPRESS_API_URL=http://localhost:3001
+      - VITE_REACT_APP_EXPRESS_API_URL=http://blog-api:8080
     depends_on:
       server:
         condition: service_healthy
