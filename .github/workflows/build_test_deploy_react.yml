@@ -120,6 +120,7 @@ jobs:
       - name: Run Cypress tests against Docker environment
         env:
           VITE_REACT_APP_SERVER_URL: http://localhost:8000
+          VITE_REACT_APP_EXPRESS_API_URL: ${{ secrets.VITE_REACT_APP_EXPRESS_API_URL }}
           CYPRESS_BASE_URL: http://localhost:3000/integ-deploiement/
         run: |
           npx cypress install
@@ -152,6 +153,7 @@ jobs:
         env:
           VITE_BASE_PATH: /integ-deploiement/
           VITE_REACT_APP_SERVER_URL: ${{ secrets.VITE_REACT_APP_SERVER_URL }}
+          VITE_REACT_APP_EXPRESS_API_URL: ${{ secrets.VITE_REACT_APP_EXPRESS_API_URL }}
 
       - name: Create .nojekyll
         run: echo > dist/.nojekyll
