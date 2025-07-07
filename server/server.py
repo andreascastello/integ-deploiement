@@ -7,7 +7,7 @@ import jwt
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from pydantic import BaseModel
 
-MY_SECRET = "secret"
+MY_SECRET = os.getenv("JWT_SECRET")
 ALGORITHM = "HS256"
 
 class LoginAdmin(BaseModel):
