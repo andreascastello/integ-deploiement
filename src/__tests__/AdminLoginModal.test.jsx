@@ -19,12 +19,12 @@ describe("AdminLoginModal", () => {
   });
 
   it("affiche une erreur si la connexion échoue", async () => {
-    global.fetch = vi.fn().mockResolvedValue({ ok: false });
+    global.fetch = vi.fn().mockRejectedValue(new Error("Connexion échouée"));
     render(<AdminLoginModal onClose={vi.fn()} onLoginSuccess={vi.fn()} />);
     fireEvent.change(screen.getByPlaceholderText(/Email/), { target: { value: "admin@ex.com" } });
     fireEvent.change(screen.getByPlaceholderText(/Mot de passe/), { target: { value: "wrong" } });
     fireEvent.click(screen.getByText(/Se connecter/));
-    await waitFor(() => expect(screen.getByText(/incorrect/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Email ou mot de passe incorrect\./i)).toBeInTheDocument());
   });
 
   it("appelle onLoginSuccess en cas de succès", async () => {
