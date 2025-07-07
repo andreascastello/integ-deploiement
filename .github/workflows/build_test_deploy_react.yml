@@ -58,103 +58,21 @@ jobs:
         env:
           ENV_FILE: ${{ secrets.ENV_FILE }}
 
-      - name: Pull Docker images with retry
+      - name: Pull Docker images
         run: |
-          # Pull des images de base avec retry
-          for image in node:20-slim python:3.9 mongo:6 mongo-express mysql:9.2.0; do
-            echo "Pulling $image..."
-            for i in {1..3}; do
-              if docker pull $image; then
-                echo "Successfully pulled $image"
-                break
-              else
-                echo "Failed to pull $image, attempt $i/3"
-                if [ $i -lt 3 ]; then
-                  sleep 10
-                fi
-              fi
-            done
-          done
-
+          # Pull des images de base
+          docker pull node:20-slim python:3.9 mongo:6 mongo-express mysql:9.2.0
           # Pull de l'image Node.js personnalisée
-          echo "Pulling enzocasalini/express_mongodb_app_ynov:fixnode..."
-          for i in {1..3}; do
-            if docker pull enzocasalini/express_mongodb_app_ynov:fixnode; then
-              echo "Successfully pulled enzocasalini/express_mongodb_app_ynov:fixnode"
-              break
-            else
-              echo "Failed to pull enzocasalini/express_mongodb_app_ynov:fixnode, attempt $i/3"
-              if [ $i -lt 3 ]; then
-                sleep 10
-              fi
-            fi
-          done
+          docker pull enzocasalini/express_mongodb_app_ynov:fixnode
 
-          # Vérifier l'image téléchargée
-          echo "=== Vérification de l'image ==="
-          docker images | grep express_mongodb_app_ynov || echo "Image not found"
-          docker inspect enzocasalini/express_mongodb_app_ynov:fixnode | head -20 || echo "Inspect failed"
-
-      - name: Start Docker environment (v4)
-        run: |
-          # Configuration Docker pour éviter les erreurs de réseau
-          export DOCKER_BUILDKIT=1
-          export COMPOSE_DOCKER_CLI_BUILD=1
-
-          # Retry avec backoff en cas d'erreur Docker Hub
-          for i in {1..3}; do
-            echo "Tentative $i de build Docker..."
-            if docker compose -f docker-compose-v4-mongo.yml up -d --build; then
-              echo "Build Docker réussi !"
-              break
-            else
-              echo "Échec du build Docker, tentative $i/3"
-              if [ $i -lt 3 ]; then
-                echo "Attente de 30 secondes avant la prochaine tentative..."
-                sleep 30
-              else
-                echo "Échec après 3 tentatives"
-                exit 1
-              fi
-            fi
-          done
+      - name: Start Docker environment
+        run: docker compose -f docker-compose-v4-mongo.yml up -d --build
         working-directory: ./
 
-      - name: Afficher les logs des services
+      - name: Vérifier l'état des services
         run: |
-          echo "=== État des conteneurs ==="
-          docker ps -a
-          echo ""
-          echo "=== Logs de la base de données ==="
-          docker logs integ-deploiement-db-1 || true
-          echo "=== Logs du serveur ==="
-          docker logs integ-deploiement-server-1 || true
-          echo "=== Logs de React ==="
-          docker logs integ-deploiement-react-1 || true
-          echo "=== Logs de l'API Node.js (blog-api) ==="
-          docker logs integ-deploiement-blog-api-1 || true
-          echo "=== Logs de MongoDB ==="
-          docker logs integ-deploiement-mongo-1 || true
-          echo "=== Logs de Mongo Express ==="
-          docker logs integ-deploiement-mongo-express-1 || true
-        working-directory: ./
-
-      - name: Redémarrer blog-api avec plus de logs si nécessaire
-        run: |
-          if ! docker logs integ-deploiement-blog-api-1 2>/dev/null | grep -q "Serveur Node.js démarré"; then
-            echo "blog-api ne fonctionne pas, redémarrage avec logs détaillés..."
-            docker stop integ-deploiement-blog-api-1 || true
-            docker rm integ-deploiement-blog-api-1 || true
-            docker run -d --name integ-deploiement-blog-api-1 \
-              --network integ-deploiement_default \
-              -p 3001:8080 \
-              -e MONGO_URI=mongodb://root:example@integ-deploiement-mongo-1:27017/blog?authSource=admin \
-              -e JWT_SECRET=test_secret \
-              -e PORT=8080 \
-              enzocasalini/express_mongodb_app_ynov:fixnode
-            sleep 10
-            docker logs integ-deploiement-blog-api-1 || true
-          fi
+          echo "✅ Services démarrés avec succès"
+          docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
         working-directory: ./
 
       - name: Wait for services to be ready
@@ -168,22 +86,6 @@ jobs:
           echo "Waiting for Node.js API (http://localhost:3001) to be ready..."
           timeout 120 bash -c 'until curl -f http://localhost:3001/api/posts > /dev/null 2>&1; do echo "Node.js API not ready yet..."; sleep 5; done'
           echo "Node.js API is ready!"
-        working-directory: ./
-
-      - name: Afficher les logs du backend
-        run: docker logs integ-deploiement-server-1 || true
-        working-directory: ./
-
-      - name: Lister les conteneurs Docker
-        run: docker ps -a
-        working-directory: ./
-
-      - name: Afficher les logs du front
-        run: docker logs integ-deploiement-react-1
-        working-directory: ./
-
-      - name: Vérifier que le front répond
-        run: curl -v http://localhost:3000
         working-directory: ./
 
       - name: Install Node.js
@@ -202,32 +104,6 @@ jobs:
 
       - name: Install front dependencies
         run: npm ci
-        working-directory: ./
-
-      - name: Afficher le HTML retourné par le front
-        run: curl -s http://localhost:3000/integ-deploiement/ > page.html && head -40 page.html
-        working-directory: ./
-
-      - name: Derniers logs du front
-        run: docker logs integ-deploiement-react-1 | tail -40
-        working-directory: ./
-
-      - name: Test API Node.js avant Cypress
-        run: |
-          echo "=== Test de l'API Node.js ==="
-          echo "Test GET /api/posts:"
-          curl -v http://localhost:3001/api/posts || echo "GET /api/posts failed"
-          echo ""
-          echo "Test POST /api/posts:"
-          curl -v -X POST http://localhost:3001/api/posts \
-            -H "Content-Type: application/json" \
-            -d '{"title":"Test Post","content":"Test Content"}' || echo "POST /api/posts failed"
-          echo ""
-          echo "=== Logs récents de blog-api ==="
-          docker logs integ-deploiement-blog-api-1 | tail -20 || true
-          echo ""
-          echo "=== Diagnostic du conteneur blog-api ==="
-          docker inspect integ-deploiement-blog-api-1 || echo "Container not found"
         working-directory: ./
 
       - name: Run Cypress tests against Docker environment
