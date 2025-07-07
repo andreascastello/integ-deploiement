@@ -100,7 +100,7 @@ jobs:
           # Configuration Docker pour éviter les erreurs de réseau
           export DOCKER_BUILDKIT=1
           export COMPOSE_DOCKER_CLI_BUILD=1
-          
+
           # Retry avec backoff en cas d'erreur Docker Hub
           for i in {1..3}; do
             echo "Tentative $i de build Docker..."
@@ -126,17 +126,35 @@ jobs:
           docker ps -a
           echo ""
           echo "=== Logs de la base de données ==="
-          docker logs db || true
+          docker logs integ-deploiement-db-1 || true
           echo "=== Logs du serveur ==="
-          docker logs server || true
+          docker logs integ-deploiement-server-1 || true
           echo "=== Logs de React ==="
           docker logs integ-deploiement-react-1 || true
           echo "=== Logs de l'API Node.js (blog-api) ==="
-          docker logs blog-api || true
+          docker logs integ-deploiement-blog-api-1 || true
           echo "=== Logs de MongoDB ==="
-          docker logs mongo || true
+          docker logs integ-deploiement-mongo-1 || true
           echo "=== Logs de Mongo Express ==="
-          docker logs mongo-express || true
+          docker logs integ-deploiement-mongo-express-1 || true
+        working-directory: ./
+
+      - name: Redémarrer blog-api avec plus de logs si nécessaire
+        run: |
+          if ! docker logs integ-deploiement-blog-api-1 2>/dev/null | grep -q "Serveur Node.js démarré"; then
+            echo "blog-api ne fonctionne pas, redémarrage avec logs détaillés..."
+            docker stop integ-deploiement-blog-api-1 || true
+            docker rm integ-deploiement-blog-api-1 || true
+            docker run -d --name integ-deploiement-blog-api-1 \
+              --network integ-deploiement_default \
+              -p 3001:8080 \
+              -e MONGO_URI=mongodb://root:example@integ-deploiement-mongo-1:27017/blog?authSource=admin \
+              -e JWT_SECRET=test_secret \
+              -e PORT=8080 \
+              enzocasalini/express_mongodb_app_ynov:fixnode
+            sleep 10
+            docker logs integ-deploiement-blog-api-1 || true
+          fi
         working-directory: ./
 
       - name: Wait for services to be ready
@@ -153,7 +171,7 @@ jobs:
         working-directory: ./
 
       - name: Afficher les logs du backend
-        run: docker logs server || true
+        run: docker logs integ-deploiement-server-1 || true
         working-directory: ./
 
       - name: Lister les conteneurs Docker
@@ -206,7 +224,10 @@ jobs:
             -d '{"title":"Test Post","content":"Test Content"}' || echo "POST /api/posts failed"
           echo ""
           echo "=== Logs récents de blog-api ==="
-          docker logs blog-api | tail -20 || true
+          docker logs integ-deploiement-blog-api-1 | tail -20 || true
+          echo ""
+          echo "=== Diagnostic du conteneur blog-api ==="
+          docker inspect integ-deploiement-blog-api-1 || echo "Container not found"
         working-directory: ./
 
       - name: Run Cypress tests against Docker environment
