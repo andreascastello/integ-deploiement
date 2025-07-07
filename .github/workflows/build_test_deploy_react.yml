@@ -90,12 +90,17 @@ jobs:
             fi
           done
 
+          # Vérifier l'image téléchargée
+          echo "=== Vérification de l'image ==="
+          docker images | grep express_mongodb_app_ynov || echo "Image not found"
+          docker inspect enzocasalini/express_mongodb_app_ynov:fixnode | head -20 || echo "Inspect failed"
+
       - name: Start Docker environment (v4)
         run: |
           # Configuration Docker pour éviter les erreurs de réseau
           export DOCKER_BUILDKIT=1
           export COMPOSE_DOCKER_CLI_BUILD=1
-
+          
           # Retry avec backoff en cas d'erreur Docker Hub
           for i in {1..3}; do
             echo "Tentative $i de build Docker..."
@@ -117,6 +122,9 @@ jobs:
 
       - name: Afficher les logs des services
         run: |
+          echo "=== État des conteneurs ==="
+          docker ps -a
+          echo ""
           echo "=== Logs de la base de données ==="
           docker logs db || true
           echo "=== Logs du serveur ==="
@@ -127,6 +135,8 @@ jobs:
           docker logs blog-api || true
           echo "=== Logs de MongoDB ==="
           docker logs mongo || true
+          echo "=== Logs de Mongo Express ==="
+          docker logs mongo-express || true
         working-directory: ./
 
       - name: Wait for services to be ready
