@@ -24,23 +24,23 @@ export default function AdminLoginModal({ onClose, onLoginSuccess }) {
                 return;
             }
 
-            // Si l'API Python échoue, essayer l'API Node.js (pour les posts)
-            res = await fetch(`${import.meta.env.VITE_REACT_APP_EXPRESS_API_URL}/api/auth/admin-login`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ email, password })
-            });
+            // // Si l'API Python échoue, essayer l'API Node.js (pour les posts)
+            // res = await fetch(`${import.meta.env.VITE_REACT_APP_EXPRESS_API_URL}/api/auth/admin-login`, {
+            //     method: "POST",
+            //     headers: {
+            //         "Content-Type": "application/json"
+            //     },
+            //     body: JSON.stringify({ email, password })
+            // });
 
-            if (res.ok) {
-                const data = await res.json();
-                const token = data.access_token;
-                onLoginSuccess(token);
-                onClose();
-            } else {
-                throw new Error("Connexion échouée");
-            }
+            // if (res.ok) {
+            //     const data = await res.json();
+            //     const token = data.access_token;
+            //     onLoginSuccess(token);
+            //     onClose();
+            // } else {
+            //     throw new Error("Connexion échouée");
+            // }
         } catch (err) {
             setError("Email ou mot de passe incorrect.");
             console.error(err);
