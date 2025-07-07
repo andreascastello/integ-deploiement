@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies and run unit/integration tests
         env:
           VITE_REACT_APP_SERVER_URL: ${{ secrets.VITE_REACT_APP_SERVER_URL }}
-          VITE_REACT_APP_EXPRESS_API_URL: ${{ secrets.VITE_REACT_APP_EXPRESS_API_URL }}
+          VITE_REACT_APP_EXPRESS_API_URL: http://blog-api:8080
         run: |
           npm ci
           npm run coverage
@@ -50,18 +50,14 @@ jobs:
         env:
           ENV_FILE: ${{ secrets.ENV_FILE }}
 
-      - name: Start Docker environment (v4)
+      - name: Start Docker environment
         run: docker compose -f docker-compose-v4-mongo.yml up -d --build
         working-directory: ./
 
-      - name: Afficher les logs des services
+      - name: Vérifier l'état des services
         run: |
-          echo "=== Logs de la base de données ==="
-          docker logs db || true
-          echo "=== Logs du serveur ==="
-          docker logs server || true
-          echo "=== Logs de React ==="
-          docker logs integ-deploiement-react-1 || true
+          echo "✅ Services démarrés avec succès"
+          docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
         working-directory: ./
 
       - name: Wait for services to be ready
@@ -72,22 +68,9 @@ jobs:
           echo "Waiting for frontend (http://localhost:3000) to be ready..."
           timeout 120 bash -c 'until curl -f http://localhost:3000 > /dev/null 2>&1; do echo "Frontend not ready yet..."; sleep 5; done'
           echo "Frontend is ready!"
-        working-directory: ./
-
-      - name: Afficher les logs du backend
-        run: docker logs server || true
-        working-directory: ./
-
-      - name: Lister les conteneurs Docker
-        run: docker ps -a
-        working-directory: ./
-
-      - name: Afficher les logs du front
-        run: docker logs integ-deploiement-react-1
-        working-directory: ./
-
-      - name: Vérifier que le front répond
-        run: curl -v http://localhost:3000
+          echo "Waiting for Node.js API (http://localhost:3001) to be ready..."
+          timeout 120 bash -c 'until curl -f http://localhost:3001/api/posts > /dev/null 2>&1; do echo "Node.js API not ready yet..."; sleep 5; done'
+          echo "Node.js API is ready!"
         working-directory: ./
 
       - name: Install Node.js
@@ -108,23 +91,22 @@ jobs:
         run: npm ci
         working-directory: ./
 
-      - name: Afficher le HTML retourné par le front
-        run: curl -s http://localhost:3000/integ-deploiement/ > page.html && head -40 page.html
-        working-directory: ./
-
-      - name: Derniers logs du front
-        run: docker logs integ-deploiement-react-1 | tail -40
-        working-directory: ./
-
       - name: Run Cypress tests against Docker environment
         env:
           VITE_REACT_APP_SERVER_URL: http://localhost:8000
-          VITE_REACT_APP_EXPRESS_API_URL: ${{ secrets.VITE_REACT_APP_EXPRESS_API_URL }}
+          VITE_REACT_APP_EXPRESS_API_URL: http://localhost:3001
           CYPRESS_BASE_URL: http://localhost:3000/integ-deploiement/
         run: |
           npx cypress install
           npx cypress run --config-file cypress.config.cjs --browser chrome --headless
         working-directory: ./
+
+      - name: Upload Cypress screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots
+          path: cypress/screenshots
 
   deploy_pages:
     needs: build_test
@@ -156,7 +138,7 @@ jobs:
 
       - name: Create .nojekyll
         run: echo > dist/.nojekyll
-      
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
@@ -174,3 +156,73 @@ jobs:
       - name: Deploy FastAPI to Vercel
         run: npx vercel deploy --prod --yes --token ${{ secrets.INTEG_TOKEN }}
         working-directory: ./server
+
+  build-and-push-react:
+    needs: build_test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: andreascastello06
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: docker.io/andreascastello06/ci_cd_react_ynov
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,format=long
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: DockerfileReact
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  build-and-push-fastapi:
+    needs: build_test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: andreascastello06
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: docker.io/andreascastello06/ci_cd_fastapi_ynov
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,format=long
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server
+          file: ./server/DockerfilePython
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
