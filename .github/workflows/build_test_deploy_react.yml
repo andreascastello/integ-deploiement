@@ -76,6 +76,20 @@ jobs:
             done
           done
 
+          # Pull de l'image Node.js personnalisée
+          echo "Pulling enzocasalini/express_mongodb_app_ynov:fixnode..."
+          for i in {1..3}; do
+            if docker pull enzocasalini/express_mongodb_app_ynov:fixnode; then
+              echo "Successfully pulled enzocasalini/express_mongodb_app_ynov:fixnode"
+              break
+            else
+              echo "Failed to pull enzocasalini/express_mongodb_app_ynov:fixnode, attempt $i/3"
+              if [ $i -lt 3 ]; then
+                sleep 10
+              fi
+            fi
+          done
+
       - name: Start Docker environment (v4)
         run: |
           # Configuration Docker pour éviter les erreurs de réseau
@@ -109,6 +123,10 @@ jobs:
           docker logs server || true
           echo "=== Logs de React ==="
           docker logs integ-deploiement-react-1 || true
+          echo "=== Logs de l'API Node.js (blog-api) ==="
+          docker logs blog-api || true
+          echo "=== Logs de MongoDB ==="
+          docker logs mongo || true
         working-directory: ./
 
       - name: Wait for services to be ready
@@ -119,6 +137,9 @@ jobs:
           echo "Waiting for frontend (http://localhost:3000) to be ready..."
           timeout 120 bash -c 'until curl -f http://localhost:3000 > /dev/null 2>&1; do echo "Frontend not ready yet..."; sleep 5; done'
           echo "Frontend is ready!"
+          echo "Waiting for Node.js API (http://localhost:3001) to be ready..."
+          timeout 120 bash -c 'until curl -f http://localhost:3001/api/posts > /dev/null 2>&1; do echo "Node.js API not ready yet..."; sleep 5; done'
+          echo "Node.js API is ready!"
         working-directory: ./
 
       - name: Afficher les logs du backend
@@ -161,6 +182,21 @@ jobs:
 
       - name: Derniers logs du front
         run: docker logs integ-deploiement-react-1 | tail -40
+        working-directory: ./
+
+      - name: Test API Node.js avant Cypress
+        run: |
+          echo "=== Test de l'API Node.js ==="
+          echo "Test GET /api/posts:"
+          curl -v http://localhost:3001/api/posts || echo "GET /api/posts failed"
+          echo ""
+          echo "Test POST /api/posts:"
+          curl -v -X POST http://localhost:3001/api/posts \
+            -H "Content-Type: application/json" \
+            -d '{"title":"Test Post","content":"Test Content"}' || echo "POST /api/posts failed"
+          echo ""
+          echo "=== Logs récents de blog-api ==="
+          docker logs blog-api | tail -20 || true
         working-directory: ./
 
       - name: Run Cypress tests against Docker environment
