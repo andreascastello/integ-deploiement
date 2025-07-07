@@ -41,6 +41,13 @@ jobs:
           name: github-pages-dist
           path: dist
 
+      - name: Upload Cypress screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots
+          path: cypress/screenshots
+
   docker_and_e2e:
     runs-on: ubuntu-latest
     needs: build_test
