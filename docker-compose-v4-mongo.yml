@@ -106,7 +106,7 @@ services:
       - mongo 
 
   blog-api:
-    image: andreascastello06/express_mongodb_app_ynov:latest
+    image: enzocasalini/express_mongodb_app_ynov:latest
     ports:
       - 3001:8080
     environment:
