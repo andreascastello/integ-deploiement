@@ -17,12 +17,18 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
+      - name: Clean npm cache and modules
+        run: |
+          rm -rf node_modules
+          rm -f package-lock.json
+          npm cache clean --force
+
       - name: Install dependencies and run unit/integration tests
         env:
           VITE_REACT_APP_SERVER_URL: ${{ secrets.VITE_REACT_APP_SERVER_URL }}
           VITE_REACT_APP_EXPRESS_API_URL: http://blog-api:8080
         run: |
-          npm ci
+          npm install
           npm run coverage
           npm run jsdoc
           npm run build
@@ -77,8 +83,11 @@ jobs:
         with:
           node-version: 20
 
-      - name: Clean node_modules
-        run: rm -rf node_modules
+      - name: Clean node_modules and cache
+        run: |
+          rm -rf node_modules
+          rm -f package-lock.json
+          npm cache clean --force
         working-directory: ./
 
       - name: Fix permissions
@@ -87,7 +96,7 @@ jobs:
         working-directory: ./
 
       - name: Install front dependencies
-        run: npm ci
+        run: npm install
         working-directory: ./
 
       - name: Run Cypress tests against Docker environment
@@ -125,8 +134,14 @@ jobs:
           name: github-pages-dist
           path: dist
 
+      - name: Clean npm cache and modules
+        run: |
+          rm -rf node_modules
+          rm -f package-lock.json
+          npm cache clean --force
+
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build for GitHub Pages
         run: npm run build
