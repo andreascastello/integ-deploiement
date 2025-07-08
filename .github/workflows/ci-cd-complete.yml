@@ -1,10 +1,7 @@
-name: CI/CD – React, FastAPI, Docker, Cypress
+name: CI/CD Complet - Tests + Déploiement
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
   build_test:
@@ -149,40 +146,6 @@ jobs:
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
 
-  deploy_npm:
-    needs: build_test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Babel dependencies
-        run: npm install --save-dev @babel/core @babel/cli @babel/preset-env @babel/preset-react
-
-      - name: Build npm package
-        run: npm run build-npm-ci
-        working-directory: ./
-
-      - name: Configure Git
-        run: |
-          git config --global user.email "andreas.castello06@gmail.com"
-          git config --global user.name "andreascastello"
-      - name: Setup npm auth
-        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-
-      - name: Check if version is already published
-        run: |
-          PKG_NAME=$(node -p "require('./package.json').name")
-          PKG_VERSION=$(node -p "require('./package.json').version")
-          if npm view "$PKG_NAME@$PKG_VERSION" > /dev/null 2>&1; then
-            echo "Version $PKG_VERSION already exists on NPM. Skipping publish."
-            exit 1
-          fi
-      - name: Publish to NPM
-        run: npm publish
-        working-directory: ./
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
   deploy_backend_vercel:
     needs: build_test
     runs-on: ubuntu-latest
@@ -258,10 +221,44 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./server
-          file: ./server/DockerfilePython
+          file: DockerfilePython
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  deploy_npm:
+    needs: build_test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Babel dependencies
+        run: npm install --save-dev @babel/core @babel/cli @babel/preset-env @babel/preset-react
+
+      - name: Build npm package
+        run: npm run build-npm-ci
+        working-directory: ./
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "andreas.castello06@gmail.com"
+          git config --global user.name "andreascastello"
+      - name: Setup npm auth
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+
+      - name: Check if version is already published
+        run: |
+          PKG_NAME=$(node -p "require('./package.json').name")
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if npm view "$PKG_NAME@$PKG_VERSION" > /dev/null 2>&1; then
+            echo "Version $PKG_VERSION already exists on NPM. Skipping publish."
+            exit 1
+          fi
+      - name: Publish to NPM
+        run: npm publish
+        working-directory: ./
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   dispatch_to_express_mongodb_app:
     needs: build_test

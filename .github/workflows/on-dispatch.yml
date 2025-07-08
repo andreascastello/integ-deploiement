@@ -1,5 +1,4 @@
-name: CI on Dispatch
-
+name: CI/CD On Dispatch
 on:
   repository_dispatch:
     types: [trigger-ci]
@@ -93,7 +92,7 @@ jobs:
 
       - name: Run Cypress tests against Docker environment
         env:
-          VITE_REACT_APP_SERVER_URL: http://localhost:8000
+          VITE_REACT_APP_SERVER_URL: http://localhost:3000
           VITE_REACT_APP_EXPRESS_API_URL: http://localhost:3001
           CYPRESS_BASE_URL: http://localhost:3000/integ-deploiement/
         run: |
@@ -222,7 +221,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./server
-          file: ./server/DockerfilePython
+          file: DockerfilePython
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
