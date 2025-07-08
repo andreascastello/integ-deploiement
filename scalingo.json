@@ -1,0 +1,14 @@
+{
+  "buildpacks": [
+    {
+      "url": "https://github.com/heroku/heroku-buildpack-nodejs"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "scripts": {
+    "build": "npm run build",
+    "start": "npm run preview"
+  }
+} 
